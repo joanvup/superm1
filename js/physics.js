@@ -4,8 +4,8 @@ const Physics = {
     GRAVITY: 0.5,
     MAX_FALL_SPEED: 12,
     MOVE_SPEED: 2.2,
-    RUN_SPEED: 3.4,
-    JUMP_VELOCITY: -11.5,
+    RUN_SPEED: 4.2,
+    JUMP_VELOCITY: -12.8,
     FRICTION: 0.8,
     ACCELERATION: 0.35,
 

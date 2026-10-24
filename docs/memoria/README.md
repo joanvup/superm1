@@ -73,6 +73,7 @@ superm1/
 - [x] Implementar motor, camara, HUD, estados de juego
 - [x] Probar el juego en navegador y corregir bugs
 - [x] Inicializar repositorio git
+- [x] Corregir la jugabilidad (salto y alcance) tras auditoria del nivel
 - [ ] Anadir animacion de la bandera al llegar a la meta
 - [ ] *(Extendible: nivel 2, jefes, sonido mejorado, soporte tactil)*
 
@@ -85,6 +86,8 @@ superm1/
 - **Tiles de 32px**, sprites 16x16 escalados x2.
 - **3 estados del jugador**: normal, super (hongo), fuego (flor).
 - **1 nivel de momento** (1-1), 140 tiles de ancho (~4480 px).
+- **Fisica del salto equilibrada** para que el nivel 1-1 sea superable (salto
+  ~4.9 tiles, alcance ~6 tiles) tras auditar los obstaculos con `playtest.js`.
 - **Colision de bloques ?** detectada desde el player (`onPlayerHitCeiling`).
 - **Koopa con 3 estados**: camina, caparazon, pateado.
 
@@ -100,6 +103,7 @@ sesiones/YYYY-MM-DD-tema.md
 
 - `2026-10-24-inicio-memoria.md` - Creacion de la memoria del proyecto.
 - `2026-10-24-desarrollo-superm1.md` - Desarrollo del juego (estructura y codigo completo).
+- `2026-10-24-jugabilidad-salto.md` - Auditoria de jugabilidad y correccion de la fisica del salto.
 
 ---
 
