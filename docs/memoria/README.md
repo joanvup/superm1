@@ -55,6 +55,15 @@ superm1/
     `-- main.js         <- Bootstrap
 ```
 
+### Herramientas de test (raiz)
+
+```
+superm1/
+|-- test.js       <- Test unitario de fisica y logica (node test.js)
+|-- playtest.js   <- Auditoria de jugabilidad: salto y obstaculos del nivel
+`-- flagtest.js   <- Test de la secuencia de la bandera (Game real)
+```
+
 ---
 
 ## Hitos / Roadmap
@@ -74,6 +83,7 @@ superm1/
 - [x] Probar el juego en navegador y corregir bugs
 - [x] Inicializar repositorio git
 - [x] Corregir la jugabilidad (salto y alcance) tras auditoria del nivel
+- [x] Corregir la secuencia de la bandera (ya no deja a Mario bloqueado)
 - [ ] Anadir animacion de la bandera al llegar a la meta
 - [ ] *(Extendible: nivel 2, jefes, sonido mejorado, soporte tactil)*
 
@@ -104,6 +114,7 @@ sesiones/YYYY-MM-DD-tema.md
 - `2026-10-24-inicio-memoria.md` - Creacion de la memoria del proyecto.
 - `2026-10-24-desarrollo-superm1.md` - Desarrollo del juego (estructura y codigo completo).
 - `2026-10-24-jugabilidad-salto.md` - Auditoria de jugabilidad y correccion de la fisica del salto.
+- `2026-10-24-secuencia-bandera.md` - Bug en la secuencia de la bandera (Mario bloqueado) y su arreglo.
 
 ---
 

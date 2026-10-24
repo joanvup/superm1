@@ -303,26 +303,31 @@ class Game {
             this.updateHUD();
         }
 
-        // Secuencia de la bandera: el jugador baja del asta y camina hasta el castillo
+        // Secuencia de la bandera: el jugador baja del asta y camina hasta el
+        // castillo. Se completa de forma determinista (sin setTimeout) para que
+        // nunca deje a Mario bloqueado (inputLocked) si algo interrumpe el bucle.
         if (this.flagSeq && !this.flagSeq.done) {
             const seq = this.flagSeq;
             seq.t += 1 / 60;
             p.inputLocked = true;
             p.vx = 0;
 
-            // Fase 1: bajar por el asta
-            const poleBottom = this.level.floorY - 40;
-            if (p.y < poleBottom) {
-                p.y += 4;
+            // Fase 1: bajar deslizandose por el asta hasta el suelo real.
+            // p.y es la esquina superior; el suelo esta en floorY, asi que los
+            // pies quedan en p.y + p.height. Bajamos hasta posar en el suelo.
+            const floorY = this.level.floorY;
+            const feetAtFloor = floorY - p.height;
+            if (p.y < feetAtFloor) {
+                p.y = Math.min(p.y + 6, feetAtFloor);
                 p.vy = 0;
             }
-            // Fase 2: caminar hasta el castillo
+            // Fase 2: caminar hasta el castillo y completar (directo, sin timer).
             else {
                 p.x += 2;
                 p.facing = 1;
                 if (p.x >= this.level.castleX - 20) {
                     seq.done = true;
-                    setTimeout(() => this.win(), 400);
+                    this.win();
                 }
             }
         }
