@@ -71,9 +71,9 @@ superm1/
 - [x] Implementar nivel 1-1
 - [x] Implementar audio (efectos + musica)
 - [x] Implementar motor, camara, HUD, estados de juego
-- [ ] Probar el juego en navegador y corregir bugs
+- [x] Probar el juego en navegador y corregir bugs
+- [x] Inicializar repositorio git
 - [ ] Anadir animacion de la bandera al llegar a la meta
-- [ ] Inicializar repositorio git
 - [ ] *(Extendible: nivel 2, jefes, sonido mejorado, soporte tactil)*
 
 ---
