@@ -1,0 +1,101 @@
+/* ====== SuperM1 — Estilos ====== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Courier New', monospace;
+    user-select: none;
+    overflow: hidden;
+}
+
+#game-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+}
+
+#game-canvas {
+    display: block;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background: #5c94fc;
+    border: 3px solid #fff;
+    border-radius: 4px;
+}
+
+/* ====== HUD superior ====== */
+#hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 12px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    border-radius: 4px 4px 0 0;
+}
+
+.hud-item span {
+    color: #ffd800;
+}
+
+/* ====== Overlay (menú/pausa/game over) ====== */
+#overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    z-index: 10;
+    text-align: center;
+    gap: 12px;
+}
+
+#overlay.hidden {
+    display: none;
+}
+
+#overlay h1 {
+    font-size: 60px;
+    color: #ffd800;
+    text-shadow: 4px 4px 0 #b00000;
+    letter-spacing: 3px;
+}
+
+#overlay-message {
+    font-size: 22px;
+    color: #fff;
+    animation: blink 1s infinite;
+}
+
+#overlay-controls {
+    font-size: 14px;
+    color: #ccc;
+    margin-top: 8px;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}

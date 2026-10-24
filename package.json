@@ -1,0 +1,12 @@
+{
+  "name": "superm1",
+  "version": "1.0.0",
+  "description": "Super Mario Bros style game in JS",
+  "main": "js/main.js",
+  "scripts": {
+    "start": "npx serve -l 8080 ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

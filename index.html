@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperM1 — Super Mario Bros</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="800" height="480"></canvas>
+        <div id="overlay" class="hidden">
+            <h1 id="overlay-title">SUPERM1</h1>
+            <p id="overlay-message">Presiona ENTER para comenzar</p>
+            <p id="overlay-controls">← → mover · ESPACIO saltar · SHIFT correr · P pausa</p>
+        </div>
+        <div id="hud">
+            <div class="hud-item">PUNTOS <span id="score">000000</span></div>
+            <div class="hud-item">MONEDAS <span id="coins">00</span></div>
+            <div class="hud-item">MUNDO <span id="world">1-1</span></div>
+            <div class="hud-item">TIEMPO <span id="time">300</span></div>
+            <div class="hud-item">VIDAS <span id="lives">3</span></div>
+        </div>
+    </div>
+
+    <!-- Scripts del juego en orden de dependencias -->
+    <script src="js/sprites.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/physics.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/entities.js"></script>
+    <script src="js/level.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

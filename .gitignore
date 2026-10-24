@@ -1,0 +1,5 @@
+# Gitignore para SuperM1
+node_modules/
+package-lock.json
+.DS_Store
+*.log
