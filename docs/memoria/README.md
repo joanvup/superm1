@@ -84,7 +84,7 @@ superm1/
 - [x] Inicializar repositorio git
 - [x] Corregir la jugabilidad (salto y alcance) tras auditoria del nivel
 - [x] Corregir la secuencia de la bandera (ya no deja a Mario bloqueado)
-- [ ] Anadir animacion de la bandera al llegar a la meta
+- [x] Anadir animacion de la bandera al llegar a la meta (5 fases + castillo)
 - [ ] *(Extendible: nivel 2, jefes, sonido mejorado, soporte tactil)*
 
 ---

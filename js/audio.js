@@ -97,6 +97,15 @@ class GameAudio {
             case 'flag':
                 [392, 523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, i * 0.08, 0.18, 'triangle', 0.08));
                 break;
+            // Descenso por el asta: barrido descendente
+            case 'slide':
+                this.sweep(1200, 300, 0.7, 'triangle', 0.05);
+                break;
+            // Fanfarria al completar el nivel
+            case 'levelClear':
+                [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) =>
+                    this.tone(f, i * 0.13, 0.3, 'square', 0.08));
+                break;
             case '1up':
                 [659, 784, 1047, 1319].forEach((f, i) => this.tone(f, i * 0.1, 0.25, 'square', 0.08));
                 break;

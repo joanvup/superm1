@@ -289,6 +289,36 @@ class CoinEffect extends Entity {
 
 // ====== PARTICULAS ======
 
+/* Texto de puntos que sube y se desvanece */
+class FloatingText {
+    constructor(text, x, y) {
+        this.text = text;
+        this.x = x;
+        this.y = y;
+        this.timer = 0;
+        this.remove = false;
+    }
+
+    update() {
+        this.timer += 1 / 60;
+        this.y -= 0.9;
+        if (this.timer > 1.4) this.remove = true;
+    }
+
+    draw(ctx, cameraX) {
+        const life = 1 - this.timer / 1.4;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, life * 1.6));
+        ctx.font = 'bold 20px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#000000';
+        ctx.fillText(this.text, Math.round(this.x - cameraX) + 1, Math.round(this.y) + 1);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(this.text, Math.round(this.x - cameraX), Math.round(this.y));
+        ctx.restore();
+    }
+}
+
 class BrickParticle {
     constructor(x, y, vx, vy) {
         this.x = x;

@@ -67,6 +67,7 @@ class Game {
     win() {
         this.setState('win');
         this.audio.stopMusic();
+        if (this.player) this.player.inputLocked = false;
         this.overlayTitle.textContent = 'NIVEL COMPLETADO';
         this.overlayMsg.textContent = 'Pulsa R para volver a jugar';
     }
@@ -138,8 +139,8 @@ class Game {
     update(dt) {
         if (this.state !== 'playing') return;
 
-        // Temporizador de nivel
-        this.timerAccum += dt;
+        // Temporizador de nivel (se detiene durante la secuencia de meta)
+        this.timerAccum += this.flagSeq ? 0 : dt;
         if (this.timerAccum >= 1) {
             this.timerAccum -= 1;
             this.time--;
@@ -152,15 +153,21 @@ class Game {
 
         this.player.update(Input, this.level, this);
 
-        for (const e of this.entities) e.update(this.level, this);
+        // Durante la secuencia de meta el mundo se congela: ni enemigos ni
+        // colisiones (Mario esta en cinematica).
+        if (this.flagSeq && !this.flagSeq.done) {
+            this.checkFlag();
+        } else {
+            for (const e of this.entities) e.update(this.level, this);
 
-        // Colisiones con entidades (antes de filtrar)
-        this.handleEntityCollisions();
-        this.handleCoins();
-        this.handlePowerUps();
-        this.checkFlag();
+            // Colisiones con entidades (antes de filtrar)
+            this.handleEntityCollisions();
+            this.handleCoins();
+            this.handlePowerUps();
+            this.checkFlag();
 
-        this.entities = this.entities.filter(e => !e.remove);
+            this.entities = this.entities.filter(e => !e.remove);
+        }
 
         for (const p of this.particles) p.update();
         this.particles = this.particles.filter(p => !p.remove);
@@ -290,47 +297,145 @@ class Game {
         }
     }
 
+    /* Secuencia de meta estilo SMB, en fases:
+         grab  -> Mario se agarra al asta en la altura a la que llego
+         slide -> se desliza hasta el suelo mientras el banderin baja con el
+         hop   -> salto corto para soltarse del asta
+         walk  -> camina hasta la puerta del castillo
+         enter -> entra y desaparece dentro del castillo
+       Termina siempre llamando a win() de forma directa (sin setTimeout),
+       para no dejar nunca a Mario bloqueado. */
     checkFlag() {
         const p = this.player;
+
+        // Activar la secuencia al tocar el asta
         if (p.alive && p.x + p.width > this.level.flagX && !p.flagReached) {
             p.flagReached = true;
+            p.inputLocked = true;
+            p.climbing = true;
+            p.vx = 0;
+            p.vy = 0;
+            p.facing = 1;
+
+            // Puntos por la altura a la que agarro el asta (como en SMB:
+            // cuanto mas arriba, mas puntos).
+            const poleH = this.level.floorY - this.level.poleTopY;
+            const reached = Math.max(0, Math.min(1, (this.level.floorY - p.y) / poleH));
+            const bonus = Math.round(100 + reached * 4900);
+            this.score += bonus;
+            this.spawnFloatingText(`+${bonus}`, this.level.flagX - 20, p.y - 20);
+
             this.flagSeq = {
+                phase: 'grab',
                 t: 0,
+                flagY: this.flagStartY(),
                 done: false,
             };
             this.audio.playSound('flag');
-            this.score += 1000;
             this.updateHUD();
         }
 
-        // Secuencia de la bandera: el jugador baja del asta y camina hasta el
-        // castillo. Se completa de forma determinista (sin setTimeout) para que
-        // nunca deje a Mario bloqueado (inputLocked) si algo interrumpe el bucle.
-        if (this.flagSeq && !this.flagSeq.done) {
-            const seq = this.flagSeq;
-            seq.t += 1 / 60;
-            p.inputLocked = true;
-            p.vx = 0;
+        const seq = this.flagSeq;
+        if (!seq || seq.done) return;
 
-            // Fase 1: bajar deslizandose por el asta hasta el suelo real.
-            // p.y es la esquina superior; el suelo esta en floorY, asi que los
-            // pies quedan en p.y + p.height. Bajamos hasta posar en el suelo.
-            const floorY = this.level.floorY;
-            const feetAtFloor = floorY - p.height;
-            if (p.y < feetAtFloor) {
-                p.y = Math.min(p.y + 6, feetAtFloor);
+        seq.t += 1 / 60;
+        p.inputLocked = true;
+        p.vx = 0;
+
+        const ts = this.level.tileSize;
+        // El asta: Mario queda montado sobre ella (pies en el eje del asta)
+        const poleFeetX = this.level.poleX - p.width / 2;
+
+        switch (seq.phase) {
+            case 'grab': {
+                p.x += (poleFeetX - p.x) * 0.35;  // se centra en el asta
                 p.vy = 0;
+                if (seq.t > 0.25) { seq.t = 0; seq.phase = 'slide'; this.audio.playSound('slide'); }
+                break;
             }
-            // Fase 2: caminar hasta el castillo y completar (directo, sin timer).
-            else {
-                p.x += 2;
+
+            case 'slide': {
+                // Mario se desliza por el asta y el banderin baja a velocidad
+                // constante (siempre se anima, aunque agarro el asta abajo).
+                const groundY = this.level.floorY - p.height;
+                if (p.y < groundY) p.y = Math.min(p.y + 4.5, groundY);
+                p.vy = 0;
+                seq.flagY = Math.min(this.flagEndY(), seq.flagY + 2);
+                p.advanceAnimation(0.09);
+                if (p.y >= groundY && seq.flagY >= this.flagEndY()) {
+                    p.onGround = true;
+                    p.climbing = false;
+                    seq.t = 0;
+                    seq.phase = 'hop';
+                }
+                break;
+            }
+
+            case 'hop': {
+                // Saltito corto para soltarse del asta, mirando a la derecha
+                if (seq.t < 0.001) { p.vy = -5.5; p.onGround = false; p.facing = 1; }
+                p.vy = Math.min(p.vy + Physics.GRAVITY, Physics.MAX_FALL_SPEED);
+                p.y += p.vy;
+                const groundY = this.level.floorY - p.height;
+                if (p.y >= groundY) { p.y = groundY; p.vy = 0; p.onGround = true; }
+                if (p.onGround && seq.t > 0.2) { seq.t = 0; seq.phase = 'walk'; }
+                break;
+            }
+
+            case 'walk': {
+                // Camina hasta la puerta (centro del castillo)
+                const doorX = this.doorX() - 40;
+                p.x += 2.4;
                 p.facing = 1;
-                if (p.x >= this.level.castleX - 20) {
+                p.advanceAnimation(0.09);
+                if (p.x >= doorX) {
+                    seq.t = 0;
+                    seq.phase = 'enter';
+                    this.audio.playSound('levelClear');
+                }
+                break;
+            }
+
+            case 'enter': {
+                // Entra por la puerta y se desvanece dentro del castillo
+                const target = this.doorX();
+                if (p.x < target) {
+                    p.x = Math.min(p.x + 2.4, target);
+                    p.advanceAnimation(0.09);
+                } else {
+                    p.alpha = Math.max(0, 1 - seq.t / 0.6);
+                }
+                if (seq.t > 0.6) {
+                    p.hidden = true;
                     seq.done = true;
                     this.win();
                 }
+                break;
+            }
+            default: {
+                // Fase desconocida o estado corrompido: rematar siempre para no
+                // dejar nunca a Mario bloqueado (el bug original).
+                p.alpha = 0;
+                p.hidden = true;
+                seq.done = true;
+                this.win();
+                break;
             }
         }
+    }
+
+    /* Centro de la puerta del castillo (x donde debe desaparecer Mario) */
+    doorX() {
+        return this.level.castleX + this.level.castleW / 2 - this.player.width / 2;
+    }
+
+    /* Posiciones del banderin: arriba (esperando) y abajo (al terminar) */
+    flagStartY() { return this.level.poleTopY + 6; }
+    flagEndY() { return this.level.floorY - 56; }
+
+    /* Texto flotante de puntos */
+    spawnFloatingText(text, x, y) {
+        this.particles.push(new FloatingText(text, x, y));
     }
 
     // ----- Renderizado -----
@@ -353,6 +458,7 @@ class Game {
             drawSprite(ctx, Sprite.coin, Math.round(c.x - cam), c.y, 2);
         }
 
+        this.renderCastle(ctx, cam);
         this.renderFlag(ctx, cam);
 
         for (const e of this.entities) e.draw(ctx, cam);
@@ -429,29 +535,49 @@ class Game {
         drawSprite(ctx, sprite, px, py, 4);
     }
 
+    renderCastle(ctx, cam) {
+        const x = Math.round(this.level.castleX - cam);
+        if (x > this.canvas.width || x + this.level.castleW < 0) return;
+        const y = this.level.floorY - this.level.castleH;
+        drawSprite(ctx, Sprite.castle, x, y, 4);
+    }
+
     renderFlag(ctx, cam) {
-        const fx = Math.round(this.level.flagX - cam);
         const baseY = this.level.floorY;
+        const poleX = Math.round(this.level.poleX - cam);
+        const topY = this.level.poleTopY;
 
-        // El banderin baja con el jugador durante la secuencia de meta
-        let flagY = baseY - 64;
-        if (this.flagSeq && !this.flagSeq.done) {
-            flagY = Math.min(baseY - 40, Math.max(flagY, this.player.y));
-        }
+        // Fuera de pantalla: nada que dibujar
+        if (poleX < -80 || poleX > this.canvas.width + 80) return;
 
-        ctx.fillStyle = '#c0c0c0';
-        ctx.fillRect(fx + 12, baseY - 180, 8, 184);
+        // Posicion del banderin: arriba esperando, y baja con Mario durante
+        // el descenso (la fase 'slide' calcula seq.flagY).
+        let flagY = this.flagStartY();
+        if (this.flagSeq) flagY = this.flagSeq.done ? this.flagEndY() : this.flagSeq.flagY;
 
-        ctx.fillStyle = '#7a3a10';
-        ctx.fillRect(fx + 2, baseY, 30, 6);
+        // Asta
+        ctx.fillStyle = Sprite.COLORS.flagPole;
+        ctx.fillRect(poleX, topY, 6, baseY - topY);
+        // Brillo del asta
+        ctx.fillStyle = '#e8e8e8';
+        ctx.fillRect(poleX, topY, 2, baseY - topY);
 
-        ctx.fillStyle = '#2d9f2d';
+        // Bola en la cima
+        ctx.fillStyle = '#f0f0f0';
         ctx.beginPath();
-        ctx.moveTo(fx + 12, flagY);
-        ctx.lineTo(fx + 48, flagY + 16);
-        ctx.lineTo(fx + 12, flagY + 32);
-        ctx.closePath();
+        ctx.arc(poleX + 3, topY - 4, 7, 0, Math.PI * 2);
         ctx.fill();
+        ctx.fillStyle = '#9a9a9a';
+        ctx.beginPath();
+        ctx.arc(poleX + 5, topY - 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Base del asta
+        drawSprite(ctx, Sprite.usedBlock, poleX - 13, baseY - 32, 2);
+
+        // Banderin (sprite) a la izquierda del asta, como en SMB
+        drawSprite(ctx, Sprite.flagBanner, Math.round(poleX - 60), Math.round(flagY), 4,
+            { F: Sprite.COLORS.flagRed, D: '#9a1010' });
     }
 
     // ----- HUD -----

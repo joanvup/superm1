@@ -27,6 +27,9 @@ class Player {
         this.deadTimer = 0;
         this.flagReached = false;
         this.inputLocked = false; // bloquea el control (secuencia de meta)
+        this.hidden = false;      // oculto (entra en el castillo)
+        this.climbing = false;    // trepando/deslizandose por el asta
+        this.alpha = 1;           // opacidad (se desvanece al entrar al castillo)
     }
 
     get small() {
@@ -51,16 +54,20 @@ class Player {
             if (this.invincibleTimer <= 0) this.invincible = false;
         }
 
-        const axis = this.inputLocked ? 0 : input.getAxisX();
-        const running = !this.inputLocked && input.getRun();
+        // Durante la secuencia de meta el juego mueve a Mario directamente
+        // (bajar del asta, caminar al castillo): ahi no se aplica fisica.
+        if (this.inputLocked) {
+            this.vx = 0;
+            return;
+        }
+
+        const axis = input.getAxisX();
+        const running = input.getRun();
         const speed = running ? Physics.RUN_SPEED : Physics.MOVE_SPEED;
         this.isRunning = running && axis !== 0;
 
         // Movimiento horizontal
-        if (this.inputLocked) {
-            this.vx *= Physics.FRICTION;
-            if (Math.abs(this.vx) < 0.1) this.vx = 0;
-        } else if (axis !== 0) {
+        if (axis !== 0) {
             this.vx += axis * Physics.ACCELERATION;
             this.vx = Math.max(-speed, Math.min(speed, this.vx));
             this.facing = axis;
@@ -70,7 +77,7 @@ class Player {
         }
 
         // Salto
-        const jumpDown = !this.inputLocked && input.getJump();
+        const jumpDown = input.getJump();
         if (jumpDown && !this.jumpHeld && this.onGround) {
             this.vy = Physics.JUMP_VELOCITY;
             this.onGround = false;
@@ -105,8 +112,13 @@ class Player {
         }
 
         // Animacion
+        this.advanceAnimation(this.isRunning ? 0.07 : 0.12);
+    }
+
+    /* Avanza el ciclo de animacion. Se usa tambien desde la secuencia de meta,
+       donde el juego mueve a Mario sin pasar por update(). */
+    advanceAnimation(frameTime = 0.12) {
         this.animTimer += 1 / 60;
-        const frameTime = this.isRunning ? 0.07 : 0.12;
         if (this.animTimer > frameTime) {
             this.animTimer = 0;
             this.animFrame = (this.animFrame + 1) % 2;
@@ -172,6 +184,7 @@ class Player {
 
     draw(ctx, cameraX) {
         if (!this.alive && this.deadTimer > 2.5) return;
+        if (this.hidden) return;
 
         // Parpadeo durante la invencibilidad
         if (this.invincible && Math.floor(this.invincibleTimer * 10) % 2 === 0) return;
@@ -181,6 +194,7 @@ class Player {
         const colors = getMarioColors(this.state);
 
         ctx.save();
+        if (this.alpha < 1) ctx.globalAlpha = Math.max(0, this.alpha);
         if (this.facing === -1) {
             const cx = drawX + 16;
             ctx.translate(cx, 0);
@@ -190,7 +204,9 @@ class Player {
 
         let sprite;
         if (this.big) {
-            if (!this.onGround) {
+            if (this.climbing) {
+                sprite = this.animFrame === 0 ? Sprite.superMarioWalk1 : Sprite.superMarioWalk2;
+            } else if (!this.onGround) {
                 sprite = Sprite.superMarioJump;
             } else if (Math.abs(this.vx) < 0.5) {
                 sprite = Sprite.superMarioIdle;
@@ -199,7 +215,10 @@ class Player {
             }
             drawSprite(ctx, sprite, drawX, drawY, 2, colors);
         } else {
-            if (this.onGround) {
+            if (this.climbing) {
+                // Trepar el asta: alterna las zancadas
+                sprite = this.animFrame === 0 ? Sprite.marioRun1 : Sprite.marioRun2;
+            } else if (this.onGround) {
                 if (Math.abs(this.vx) < 0.5) {
                     sprite = Sprite.marioIdle;
                 } else {

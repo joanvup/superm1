@@ -74,6 +74,7 @@ global.Mushroom = Mushroom;
 global.FireFlower = FireFlower;
 global.CoinEffect = CoinEffect;
 global.BrickParticle = BrickParticle;
+global.FloatingText = FloatingText;
 global.GameAudio = GameAudio;
 
 // En navegador las clases son globales; en Node via eval son locales al

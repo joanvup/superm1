@@ -19,7 +19,11 @@ class Level {
         this.particles = [];
         this.coins = [];    // monedas estaticas {x, y, taken}
         this.flagX = 0;     // pixels
+        this.poleX = 0;     // eje del asta (pixels)
+        this.poleTopY = 0;  // cima del asta (pixels)
         this.castleX = 0;   // pixels
+        this.castleW = 0;   // pixels
+        this.castleH = 0;   // pixels
         this.playerStart = { x: 64, y: 0 };
 
         for (let y = 0; y < this.height; y++) {
@@ -218,7 +222,11 @@ function buildLevel1() {
 
     // Asta de la bandera y castillo
     L.flagX = 128 * L.tileSize;
+    L.poleX = L.flagX + 12;                     // eje del asta
+    L.poleTopY = L.floorY - 180;                // cima del asta
     L.castleX = 131 * L.tileSize;
+    L.castleW = 16 * 4;                         // sprite 16px a escala 4
+    L.castleH = 16 * 4;
 
     // Punto de partida del jugador
     L.playerStart = { x: 64, y: F * L.tileSize - 28 };

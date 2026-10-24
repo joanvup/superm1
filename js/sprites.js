@@ -541,6 +541,23 @@ const Sprite = {
         'LLLLLDDP',
     ],
 
+    // Banderin de meta (16x12). F = color de la bandera. El borde vertical
+    // derecho queda unido al asta y la hipotenusa apunta hacia arriba-izquierda.
+    flagBanner: [
+        'FFFFFFFFFFFFFFFF',
+        '.FFFFFFFFFFFFFFF',
+        '..FFFFFFFFFFFFFF',
+        '...FFFFFFFFFFFFF',
+        '....FFFFFFFFFFFF',
+        '.....FFFFFFFFFFF',
+        '......FFFFFFFFFF',
+        '.......FFFFFFFFF',
+        '........FFFFFFFF',
+        '.........FFFFFFF',
+        '..........FFFFFF',
+        '...........FFFFF',
+    ],
+
     // Bandera de meta (asta + triangulo verde), 16x16
     flag: [
         '..GGGGGGGGGGGG..',
