@@ -10,13 +10,15 @@
 |------|-----------|
 | `README.md` | Indice general y contexto rapido (este archivo) |
 | `sesiones/` | Registro cronologico de lo trabajado en cada sesion |
+| `commits.md` | Que hay realmente en cada commit (varios mensajes no describen su contenido) |
 
 ---
 
 ## Estado actual del proyecto
 
 - **Ultima actualizacion:** 2026-10-24
-- **Fase:** Desarrollo activo - juego jugable en construccion (estructura completa, pendiente de prueba en navegador)
+- **Fase:** Juego completo y jugable - probado en navegador (nivel 1-1 superable,
+  meta con animacion). Pendiente de ampliacion (mas niveles, jefes, tactil)
 
 ---
 
@@ -33,7 +35,7 @@ Crear un **juego de plataformas estilo Super Mario Bros** llamado **SuperM1**, e
 - **Pixel art:** Sprites procedurales (matrices de strings, fillRect por pixel)
 - **Audio:** Web Audio API (efectos + melodia de fondo sintetizados)
 - **Estilo:** Clasico retro 8-bit estilo NES
-- **Repositorio:** Aun no inicializado (git)
+- **Repositorio:** git en GitHub (github.com/joanvup/superm1), rama `master`
 
 ---
 
@@ -61,7 +63,7 @@ superm1/
 superm1/
 |-- test.js       <- Test unitario de fisica y logica (node test.js)
 |-- playtest.js   <- Auditoria de jugabilidad: salto y obstaculos del nivel
-`-- flagtest.js   <- Test de la secuencia de la bandera (Game real)
+`-- flagtest.js   <- Test de la animacion de la meta (usa la clase Game real)
 ```
 
 ---
@@ -120,7 +122,9 @@ sesiones/YYYY-MM-DD-tema.md
 
 ## Recursos y enlaces
 
-- Sin enlaces externos por ahora (proyecto 100% self-contained).
+- Repositorio: https://github.com/joanvup/superm1
+- Por lo demas el proyecto es 100% self-contained (sin imagenes ni librerias:
+  pixel art y audio generados por codigo).
 
 ---
 
@@ -129,3 +133,7 @@ sesiones/YYYY-MM-DD-tema.md
 1. Al **iniciar** una sesion: lee este `README.md` y el ultimo archivo de `sesiones/`.
 2. Al **terminar** una sesion: crea un nuevo archivo en `sesiones/` con lo trabajado.
 3. Actualiza este README cuando el estado del proyecto cambie significativamente.
+4. Al **comitear**: escribe un mensaje que describa el cambio (no los archivos
+   tocados) y anade en el cuerpo la referencia a
+   `sesiones/YYYY-MM-DD-tema.md`. Si un commit queda mal descrito, registralo
+   en `commits.md`.
