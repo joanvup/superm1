@@ -65,11 +65,13 @@ try {
 // accederlas desde el modulo hay que re-exponerlas al objeto global.
 global.Physics = Physics;
 global.buildLevel1 = buildLevel1;
+global.buildLevel2 = buildLevel2;
 global.Sprite = Sprite;
 global.Input = Input;
 global.Player = Player;
 global.Goomba = Goomba;
 global.Koopa = Koopa;
+global.Piranha = Piranha;
 global.Mushroom = Mushroom;
 global.FireFlower = FireFlower;
 global.CoinEffect = CoinEffect;
@@ -100,7 +102,9 @@ try {
     check('pipe en (36,12)', L.isSolid(36, 12));
     check('tile ? en (16,9)', L.get(16, 9) === '?');
     check('10 spawns de enemigos', L.spawns.length === 10);
-    check('15 monedas estaticas', L.coins.length === 15);
+    // El 1-1 perdio 2 monedas al acortar la fila de ladrillos 64-69 a 64-67
+    // (los ladrillos tapaban la rampa de salto de la tuberia de 4)
+    check('13 monedas estaticas', L.coins.length === 13);
     check('flag en x=4096', L.flagX === 4096);
     check('player start', L.playerStart.x === 64 && L.playerStart.y === 388);
 
@@ -170,6 +174,114 @@ try {
     check('efecto moneda se autoelimina', ce.remove === false);
     ce.update();
     check('efecto moneda tiene timer', ce.timer > 0);
+
+    // --- Nivel 2 (cuevas) ---
+    console.log('\n[Nivel 2]');
+    const L2 = buildLevel2();
+    check('tema underground', L2.theme === 'underground');
+    check('suelo en (0,13) solido', L2.isSolid(0, 13));
+    check('foso de 3 tiles entre 36 y 38', !L2.isSolid(36, 13) && !L2.isSolid(38, 13)
+        && L2.isSolid(35, 13) && L2.isSolid(39, 13));
+    check('puente de piedra a 3 tiles (tx 66-70)',
+        L2.get(66, 10) === 'S' && L2.get(70, 10) === 'S' && !L2.isSolid(68, 13));
+    check('tuberia con pirania en (14,12)', L2.isSolid(14, 12) && L2.get(14, 12) === 'P');
+    check('hay piranhas en los spawns', L2.spawns.filter(s => s.type === 'piranha').length === 3);
+    check('flag en x=4096', L2.flagX === 4096);
+    check('player start', L2.playerStart.x === 64 && L2.playerStart.y === 388);
+
+    // --- Piranha ---
+    console.log('\n[Piranha]');
+    const piranha = new Piranha(14 * 32, 0); // tuberia de 2 tiles en tx 14
+    piranha.initFromLevel(L2);
+    check('piranha se alinea con la tuberia', piranha.pipeTx === 14 && piranha.state === 'hidden');
+    check('piranha es deadly y no aplastable', piranha.deadly === true && piranha.noStomp === true);
+    // La boca de la tuberia de 2 tiles en tx14 esta en la fila 11
+    check('boca de la tuberia en y=11*32', piranha.pipeTopY === 11 * 32);
+    check('piranha centrada sobre la boca',
+        piranha.x === 14 * 32 + 32 - piranha.width / 2);
+    check('metida: la piraña no asoma por encima de la boca', piranha.inY === piranha.pipeTopY);
+    check('fuera: la piraña asoma entera', piranha.outY === piranha.pipeTopY - piranha.height);
+    check('empieza metida', piranha.y === piranha.inY);
+
+    // Ciclo completo: hidden -> rising -> out -> sinking -> hidden
+    const seq = [];
+    for (let i = 0; i < 60 * 12; i++) {
+        piranha.update(L2, fakeGame);
+        if (seq[seq.length - 1] !== piranha.state) seq.push(piranha.state);
+        if (seq.length >= 5) break;
+    }
+    check('recorre hidden->rising->out->sinking->hidden',
+        seq.slice(0, 5).join(',') === 'hidden,rising,out,sinking,hidden');
+    check('al asomar del todo esta por encima de la boca', piranha.outY < piranha.pipeTopY);
+
+    // Al estar metida queda dentro de la tuberia (por debajo de la boca)
+    const p2 = new Piranha(14 * 32, 0);
+    p2.initFromLevel(L2);
+    check('metida: y coincide con la boca (no asoma)', p2.y >= p2.pipeTopY);
+
+    // No se aplasta
+    const yBefore = piranha.y;
+    piranha.squish();
+    check('pisar piraña no la aplasta', piranha.y === yBefore && !piranha.squished);
+
+    // Spawn sin tuberia: se elimina (no rompe el juego)
+    const p3 = new Piranha(0, 0);   // tx 0: no hay tuberia
+    p3.initFromLevel(L2);
+    check('spawn sin tuberia se elimina', p3.remove === true);
+
+    // --- Render por tema (humo: no debe lanzar y debe pintar el fondo) ---
+    console.log('\n[Render]');
+    const paintLog = [];
+    const recCtx = new Proxy({}, {
+        get(t, prop) {
+            if (prop in t) return t[prop];
+            return (...args) => { paintLog.push({ fn: prop, args }); };
+        },
+        set(t, prop, value) {
+            t[prop] = value;
+            if (prop === 'fillStyle') paintLog.push({ fn: 'fillStyle', args: [value] });
+            return true;
+        },
+    });
+    const fakeCanvas = { width: 800, height: 480, getContext: () => recCtx };
+    const game = new Game(fakeCanvas);
+
+    game.startLevel(1);
+    paintLog.length = 0;
+    game.render();
+    const bg1 = paintLog.filter(p => p.fn === 'fillStyle').map(p => p.args[0]);
+    check('el 1-1 pinta el cielo azul', bg1.includes('#5c94fc'));
+    check('el 1-1 no pinta fondo de cueva', !bg1.includes(Sprite.COLORS.caveBg));
+
+    game.startLevel(2);
+    paintLog.length = 0;
+    game.render();
+    const bg2 = paintLog.filter(p => p.fn === 'fillStyle').map(p => p.args[0]);
+    check('el 2-1 pinta el fondo de cueva', bg2.includes(Sprite.COLORS.caveBg));
+    check('el 2-1 no pinta cielo azul', !bg2.includes('#5c94fc'));
+
+    // La musica cambia con el tema
+    check('hay melodia de cueva distinta', GameAudio.MUSIC.underground.length > 0
+        && GameAudio.MUSIC.underground !== GameAudio.MUSIC.overworld);
+
+    // --- Simulacion de juego real en el 2-1 (humo, 10s) ---
+    console.log('\n[Simulacion 2-1]');
+    game.startLevel(2);
+    game.setState('playing');
+    let simError = null;
+    let frames = 0;
+    for (let f = 0; f < 600; f++) {
+        Input.keys = { ArrowRight: true, ShiftLeft: true, Space: (f % 60) < 18 };
+        try {
+            game.update(1 / 60);
+        } catch (err) { simError = err; break; }
+        frames++;
+        if (!game.player.alive) break;
+    }
+    check('600 frames del 2-1 sin excepciones', simError === null && frames > 0);
+    if (simError) console.error('  -> ', simError.message);
+    check('la camara sigue a Mario sin salirse del nivel',
+        game.cameraX >= 0 && game.cameraX <= game.level.width * 32 - 800);
 
     console.log('\n=== TODAS LAS PRUEBAS PASARON (', fail, 'fallos ) ===');
     if (fail > 0) process.exit(1);

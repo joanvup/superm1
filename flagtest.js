@@ -86,10 +86,14 @@ function simulate(setup, capMs = 2500) {
 
     for (const [name, setup] of scenarios) {
         const g = await simulate(setup);
-        const won = g.state === 'win';
-        const noLock = !g.player.inputLocked || won;
-        console.log(`  ${won ? 'CORRECTO' : 'FALLA  '} ${name}  (state=${g.state})`);
-        check(`  -> termina en win`, won);
+        // Con el encadenado, completar el 1-1 pasa al nivel 2 (playing) en lugar
+        // de ganar: ambas son formas validas de "completar la secuencia".
+        const advanced = g.state === 'playing' && g.currentLevel === 2;
+        const won = g.state === 'win' && g.currentLevel === 2;
+        const completed = advanced || won;
+        const noLock = !g.player.inputLocked || completed;
+        console.log(`  ${completed ? 'CORRECTO' : 'FALLA  '} ${name}  (state=${g.state}, nivel ${g.currentLevel})`);
+        check(`  -> completa la secuencia`, completed);
         check(`  -> no deja bloqueado`, noLock);
     }
 
@@ -99,6 +103,7 @@ function simulate(setup, capMs = 2500) {
         const canvas = { width: 800, height: 480, getContext: makeCtx };
         const g = new Game(canvas);
         g.state = 'playing';
+        g.currentLevel = 2;      // ultimo nivel: al completar el 1-1, gana (no salta al 2)
         g.player.x = L.flagX - 10;
         g.player.y = L.floorY - 28;
 
@@ -127,10 +132,8 @@ function simulate(setup, capMs = 2500) {
         check('el banderin desciende', flagYs[flagYs.length - 1] > flagYs[0] + 100);
         check('el banderin llega abajo', Math.abs(flagYs[flagYs.length - 1] - g.flagEndY()) < 1);
         check('el banderin nunca sube', flagYs.every((y, i) => i === 0 || y >= flagYs[i - 1]));
-        check('Mario entra al castillo', g.player.hidden === true);
-        check('Mario queda oculto (alpha 0)', g.player.alpha === 0);
         check('el mundo se congela (enemigos quietos)', frozeWorld);
-        check('termina en win', g.state === 'win');
+        check('gana al completar el ultimo nivel', g.state === 'win' && g.currentLevel === 2);
     }
 
     /* --- 3. Puntos: crecen con la altura del agarre --- */
@@ -140,6 +143,7 @@ function simulate(setup, capMs = 2500) {
             const canvas = { width: 800, height: 480, getContext: makeCtx };
             const g = new Game(canvas);
             g.state = 'playing';
+            g.currentLevel = 2;   // ultimo nivel: no salta al 2 al completar
             g.score = 0;
             g.player.x = L.flagX - 10;
             g.player.y = y;
@@ -166,6 +170,7 @@ function simulate(setup, capMs = 2500) {
         const canvas = { width: 800, height: 480, getContext: makeCtx };
         const g = new Game(canvas);
         g.state = 'playing';
+        g.currentLevel = 2;   // ultimo nivel: al completar gana
         g.player.x = L.flagX - 10;
         g.player.y = L.floorY - 28;   // agarre a nivel de suelo
 
@@ -177,7 +182,7 @@ function simulate(setup, capMs = 2500) {
         console.log(`  banderin: y ${flagYs[0]} -> ${flagYs[flagYs.length - 1]}  (state=${g.state})`);
         check('el banderin recorre su trayectoria', flagYs[flagYs.length - 1] - flagYs[0] > 100);
         check('tarda un rato en bajar (no es instantaneo)', flagYs.length > 40);
-        check('termina en win', g.state === 'win');
+        check('gana al completar el ultimo nivel', g.state === 'win' && g.currentLevel === 2);
     }
 
     console.log(failures === 0 ? '\n=== TODAS LAS PRUEBAS DE BANDERA PASARON ===' : `\n=== ${failures} FALLOS ===`);

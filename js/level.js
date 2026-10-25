@@ -25,6 +25,7 @@ class Level {
         this.castleW = 0;   // pixels
         this.castleH = 0;   // pixels
         this.playerStart = { x: 64, y: 0 };
+        this.theme = 'overworld'; // overworld | underground (cambia fondo y musica)
 
         for (let y = 0; y < this.height; y++) {
             this.grid.push(new Array(this.width).fill('.'));
@@ -164,10 +165,12 @@ function buildLevel1() {
     L.set(58, F - 4, '?');
     L.addDecor('bush', 62, F - 1, 2);
 
-    // Zona de ladrillos con koopa arriba
-    L.row(64, 69, F - 4, 'B');
+    // Zona de ladrillos con koopa arriba. Terminan dos tiles ANTES de la
+    // tuberia alta: si llegaran hasta ella, el techo no dejaria ganar altura
+    // para coronarla y la tuberia de 4 seria imposible de saltar.
+    L.row(64, 67, F - 4, 'B');
     L.set(66, F - 4, '?');
-    L.coinRow(64, 69, F - 8);
+    L.coinRow(64, 67, F - 8);
     L.spawn('goomba', 66, F - 5);
 
     // Segunda tuberia alta
@@ -235,6 +238,178 @@ function buildLevel1() {
     L.addDecor('cloud', 96, 2, 2);
     L.addDecor('bush', 98, F - 1, 2);
     L.addDecor('hill', 122, F - 4, 2);
+
+    return L;
+}
+
+/* ====== Construccion del Nivel 2-1 (cuevas) ======
+   Tema subterraneo: fondo oscuro con estrellas, estalactitas en el techo,
+   tuberias con plantas pirania, huecos con plataformas de piedra sobre un
+   foso, y una "sala" de bloques para saltar. Enemigos: pirania + goombas. */
+function buildLevel2() {
+    const L = new Level();
+    L.theme = 'underground';
+    const F = L.height - 2; // fila superior del suelo = 13
+
+    // Estrellas de fondo (no colisionan, decoracion)
+    L.addDecor('star', 2, 1, 1);
+    L.addDecor('star', 8, 3, 1);
+    L.addDecor('star', 13, 2, 1);
+    L.addDecor('star', 19, 4, 1);
+    L.addDecor('star', 25, 1, 1);
+    L.addDecor('star', 31, 3, 1);
+    L.addDecor('star', 37, 2, 1);
+    L.addDecor('star', 43, 1, 1);
+    L.addDecor('star', 49, 4, 1);
+    L.addDecor('star', 55, 2, 1);
+    L.addDecor('star', 61, 3, 1);
+    L.addDecor('star', 67, 1, 1);
+    L.addDecor('star', 73, 4, 1);
+    L.addDecor('star', 79, 2, 1);
+    L.addDecor('star', 85, 1, 1);
+    L.addDecor('star', 91, 3, 1);
+    L.addDecor('star', 97, 2, 1);
+    L.addDecor('star', 103, 4, 1);
+    L.addDecor('star', 109, 1, 1);
+    L.addDecor('star', 115, 3, 1);
+    L.addDecor('star', 121, 2, 1);
+    L.addDecor('star', 127, 1, 1);
+
+    // Estalactitas que cuelgan del techo
+    L.addDecor('stalactite', 3, 0, 2);
+    L.addDecor('stalactite', 10, 0, 2);
+    L.addDecor('stalactite', 17, 0, 2);
+    L.addDecor('stalactite', 24, 0, 2);
+    L.addDecor('stalactite', 31, 0, 2);
+    L.addDecor('stalactite', 38, 0, 2);
+    L.addDecor('stalactite', 45, 0, 2);
+    L.addDecor('stalactite', 52, 0, 2);
+    L.addDecor('stalactite', 59, 0, 2);
+    L.addDecor('stalactite', 66, 0, 2);
+    L.addDecor('stalactite', 73, 0, 2);
+    L.addDecor('stalactite', 80, 0, 2);
+    L.addDecor('stalactite', 87, 0, 2);
+    L.addDecor('stalactite', 94, 0, 2);
+    L.addDecor('stalactite', 101, 0, 2);
+    L.addDecor('stalactite', 108, 0, 2);
+    L.addDecor('stalactite', 115, 0, 2);
+    L.addDecor('stalactite', 122, 0, 2);
+
+    // --- Tramo 1: entrada de la cueva ---
+    L.ground(0, 40);
+    L.addDecor('caveBush', 5, F - 1, 2);
+
+    // Primeros bloques ? con moneda
+    L.set(8, F - 4, '?');
+    L.coin(9, F - 5);
+
+    // Tuberia con pirania (baja, para ensenar a esquivarla)
+    L.pipe(14, 2);
+    L.spawn('piranha', 14, 0); // la posicion la ajusta la propia pirania
+    L.spawn('goomba', 18, F - 1);
+    L.addDecor('caveBush', 12, F - 1, 2);
+
+    // Bloque ? con hongo
+    L.set(20, F - 4, 'm');
+    L.coinRow(20, 22, F - 8);
+    L.addDecor('caveBush', 22, F - 1, 2);
+
+    // Segunda tuberia con pirania, mas alta
+    L.pipe(26, 3);
+    L.spawn('piranha', 26, 0);
+    L.spawn('goomba', 30, F - 1);
+    L.spawn('goomba', 31, F - 1);
+
+    // --- Tramo 2: primer foso (se salta de un salto, como en el 1-1) ---
+    for (let x = 36; x <= 38; x++) {
+        for (let d = 0; d < 2; d++) L.set(x, L.height - 1 - d, '.');
+    }
+    L.coinRow(36, 38, F - 4);
+
+    // Suelo retoma en 39
+    L.ground(39, 55);
+    L.addDecor('caveBush', 44, F - 1, 2);
+
+    // "Sala" de la cueva: dos arcos de ladrillo enmarcando una tuberia con
+    // pirania. Los ladrillos bajos quedan SEPARADOS de la tuberia para que
+    // haya sitio de sobra de saltarla (si cuelgan justo delante, la cabeza
+    // choca antes de coronarla y el nivel se vuelve imposible).
+    L.row(44, 45, F - 4, 'B');
+    L.row(52, 53, F - 4, 'B');
+    L.row(44, 45, F - 8, 'B');
+    L.row(52, 53, F - 8, 'B');
+    L.set(45, F - 4, '?');
+    L.set(52, F - 4, 'm');
+    L.pipe(48, 3);
+    L.spawn('piranha', 48, 0);
+    L.coinRow(46, 51, F - 12);
+    L.spawn('goomba', 54, F - 1);
+    L.addDecor('caveBush', 43, F - 1, 2);
+    L.addDecor('caveBush', 57, F - 1, 2);
+
+    // --- Tramo 3: hueco pequeno (2 tiles) entre 56 y 57 ---
+    L.ground(58, 65);
+
+    // Bloque ? con flor
+    L.set(60, F - 4, 'f');
+    L.coinRow(60, 62, F - 8);
+    L.addDecor('caveBush', 62, F - 1, 2);
+
+    // Puente de piedra: a 3 tiles del suelo (alcanzable con margen) sobre un
+    // foso de 5 tiles sin suelo
+    L.set(66, F - 3, 'S');
+    L.set(67, F - 3, 'S');
+    L.set(68, F - 3, 'S');
+    L.set(69, F - 3, 'S');
+    L.set(70, F - 3, 'S');
+    L.coinRow(66, 70, F - 7);
+    L.ground(71, 134);
+    L.spawn('koopa', 74, F - 1);
+    L.spawn('goomba', 77, F - 1);
+    L.spawn('koopa', 80, F - 1);
+    L.addDecor('caveBush', 76, F - 1, 2);
+    L.addDecor('caveBush', 82, F - 1, 2);
+
+    // Bloques ? y ladrillos de despedida
+    L.set(84, F - 4, '?');
+    L.set(85, F - 4, 'B');
+    L.set(86, F - 4, 'B');
+    L.set(87, F - 4, '?');
+    L.coinRow(84, 87, F - 8);
+    L.addDecor('caveBush', 88, F - 1, 2);
+
+    // Escalon ascendente corto
+    L.set(90, F - 4, 'S');
+    L.set(90, F - 8, 'S');
+    L.set(91, F - 4, 'S');
+    L.set(92, F - 4, 'S');
+
+    // Suelo hasta la meta
+    L.ground(93, 110);
+    L.spawn('koopa', 96, F - 1);
+    L.addDecor('caveBush', 98, F - 1, 2);
+
+    // Escalinata final hacia la bandera
+    for (let i = 0; i < 8; i++) {
+        for (let h = 0; h <= i; h++) {
+            L.set(116 + i, F - 1 - h, 'S');
+        }
+    }
+
+    // Asta de la bandera y "castillo" de la cueva (misma posicion que el 1-1)
+    L.flagX = 128 * L.tileSize;
+    L.poleX = L.flagX + 12;                     // eje del asta
+    L.poleTopY = L.floorY - 180;                // cima del asta
+    L.castleX = 131 * L.tileSize;
+    L.castleW = 16 * 4;
+    L.castleH = 16 * 4;
+
+    // Punto de partida
+    L.playerStart = { x: 64, y: F * L.tileSize - 28 };
+
+    // Decoracion final
+    L.addDecor('caveBush', 100, F - 1, 2);
+    L.addDecor('stalactite', 126, 0, 2);
 
     return L;
 }

@@ -112,19 +112,35 @@ class GameAudio {
         }
     }
 
-    // Bucle melodico sencillo de fondo
-    startMusic() {
-        if (!this.enabled || this.musicOn) return;
-        if (!this.ensureContext()) return;
-        this.musicOn = true;
-
-        // Melodia: [frecuencia, duracion]
-        const notes = [
+    /* Melodias por tema: [frecuencia, duracion]. La de cueva es mas grave y
+       lenta, para que el 2-1 no suene igual que el 1-1. */
+    static MUSIC = {
+        overworld: [
             [659, 0.15], [659, 0.3], [659, 0.15], [523, 0.15], [659, 0.3],
             [784, 0.6], [392, 0.6], [523, 0.4], [784, 0.4], [659, 0.4],
             [587, 0.2], [494, 0.3], [523, 0.2], [440, 0.3], [494, 0.2],
             [392, 0.4], [330, 0.4], [440, 0.4], [494, 0.4], [392, 0.5],
-        ];
+        ],
+        underground: [
+            [220, 0.35], [196, 0.35], [175, 0.35], [165, 0.35],
+            [147, 0.5], [165, 0.25], [175, 0.25], [196, 0.5],
+            [220, 0.35], [247, 0.35], [220, 0.35], [196, 0.35],
+            [175, 0.6], [147, 0.6],
+        ],
+    };
+
+    /* Arranca la musica del tema indicado. Si ya suena otra melodia, la
+       cambia (asi el paso del 1-1 al 2-1 se nota). */
+    startMusic(theme = 'overworld') {
+        if (!this.enabled) return;
+        if (this.musicOn && this.musicTheme === theme) return;
+        if (this.musicOn) this.stopMusic();
+        if (!this.ensureContext()) return;
+        this.musicOn = true;
+        this.musicTheme = theme;
+
+        const notes = GameAudio.MUSIC[theme] || GameAudio.MUSIC.overworld;
+        const tempo = theme === 'underground' ? 260 : 190;
 
         let step = 0;
         this.musicTimer = setInterval(() => {
@@ -132,11 +148,12 @@ class GameAudio {
             const [freq, dur] = notes[step % notes.length];
             this.tone(freq, 0, dur * 0.9, 'square', 0.03);
             step++;
-        }, 190);
+        }, tempo);
     }
 
     stopMusic() {
         this.musicOn = false;
+        this.musicTheme = null;
         if (this.musicTimer) {
             clearInterval(this.musicTimer);
             this.musicTimer = null;

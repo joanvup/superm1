@@ -187,6 +187,94 @@ class Koopa extends Entity {
     }
 }
 
+/* ====== PLANTA PIRANIA ======
+   Vive dentro de una tuberia: asoma y se recoloca periodicamente. No se
+   puede aplastar (noStomp): tocarla en cualquier punto hace dano. */
+class Piranha extends Entity {
+    constructor(x, y) {
+        // x = columna izquierda de la tuberia, en pixels (datos del spawn)
+        super(x, y, 28, 30);
+        this.pipeTx = Math.floor(x / 32);
+        this.state = 'hidden';      // hidden | rising | out | sinking
+        this.timer = 0;
+        this.deadly = true;
+        this.noStomp = true;        // no se aplasta: solo hace dano
+        this.vx = 0;
+        this.vy = 0;
+        this.pipeTopY = 0;          // y de la boca de la tuberia
+        this.outY = 0;              // y cuando esta del todo fuera
+        this.inY = 0;               // y cuando esta metida en la tuberia
+    }
+
+    /* Localiza la tuberia del spawn y se alinea con su boca. */
+    initFromLevel(level) {
+        const ts = level.tileSize;
+        const tx = this.pipeTx;
+
+        let topRow = -1;
+        for (let ty = 0; ty < level.height; ty++) {
+            if (level.get(tx, ty) === 'P') { topRow = ty; break; }
+        }
+        if (topRow === -1) { this.remove = true; return; }   // no hay tuberia
+
+        let w = 1;
+        while (level.get(tx + w, topRow) === 'P') w++;       // ancho de la tuberia
+
+        this.pipeTopY = topRow * ts;
+        this.x = tx * ts + (w * ts) / 2 - this.width / 2;    // centrada en la boca
+        this.inY = this.pipeTopY;                             // metida: no asoma
+        this.outY = this.pipeTopY - this.height;              // fuera: asoma entera
+        this.y = this.inY;
+        this.state = 'hidden';
+        this.timer = 1 + Math.random() * 1.5;
+    }
+
+    update(level) {
+        this.timer -= 1 / 60;
+
+        switch (this.state) {
+            case 'hidden':
+                if (this.timer <= 0) { this.state = 'rising'; }
+                break;
+            case 'rising':
+                this.y -= 1.6;
+                if (this.y <= this.outY) {
+                    this.y = this.outY;
+                    this.state = 'out';
+                    this.timer = 1.2 + Math.random() * 0.8;
+                }
+                break;
+            case 'out':
+                if (this.timer <= 0) { this.state = 'sinking'; }
+                break;
+            case 'sinking':
+                this.y += 1.6;
+                if (this.y >= this.inY) {
+                    this.y = this.inY;
+                    this.state = 'hidden';
+                    this.timer = 1.5 + Math.random() * 2;
+                }
+                break;
+        }
+    }
+
+    squish() { /* la piraña no se aplasta */ }
+
+    /* Solo se dibuja la parte que asoma por encima de la boca de la tuberia. */
+    draw(ctx, cameraX) {
+        if (this.remove) return;
+        const drawX = Math.round(this.x - cameraX) - 2;   // sprite 32px vs hitbox 28
+        const drawY = Math.round(this.y);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(drawX - 4, this.pipeTopY - this.height - 8, this.width + 12, this.height + 8);
+        ctx.clip();
+        drawSprite(ctx, Sprite.piranha, drawX, drawY, 2);
+        ctx.restore();
+    }
+}
+
 // ====== POWER-UPS Y RECOLECTABLES ======
 
 class Mushroom extends Entity {

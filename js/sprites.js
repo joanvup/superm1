@@ -45,6 +45,11 @@ const Sprite = {
         flagRed: '#e52521',
         flagPole: '#c0c0c0',
         flagBase: '#7a3a10',
+        // Tema subterraneo / cuevas
+        caveBg: '#1a1a2e',      // fondo de cueva (morado oscuro)
+        caveRock: '#5a4a6a',    // roca / estalactita
+        caveStar: '#fff6c8',    // estrella
+        caveBush: '#3a5a3a',    // arbusto oscuro de cueva
     },
 
     /* ====== Personaje principal: MARIO ======
@@ -652,6 +657,50 @@ const Sprite = {
         }
         return rows;
     })(),
+
+    // Estrella (8x8) para el fondo de cueva
+    star: [
+        '....D...',
+        '..DD.DD.',
+        '...DDD..',
+        '.DDDDDD.',
+        '..DDDDD.',
+        '...DDD..',
+        '..DD.DD.',
+        'D...D...',
+    ],
+
+    // Estalactita (16x12) cuelga del techo de la cueva
+    stalactite: [
+        '.....CCCCC.....',
+        '....CCCCCCC....',
+        '....CC.CCC.....',
+        '...CC..CCCC....',
+        '...CC...CC.....',
+        '..CC....CC.....',
+        '..CC....CC.....',
+        '..C.....CC.....',
+        '.CC.....CC.....',
+        'CC......CC.....',
+        'C.......CC.....',
+        'C.......C......',
+    ],
+
+    // Arbusto de cueva (16x12), mas oscuro que el de arriba
+    caveBush: [
+        '................',
+        '................',
+        '................',
+        '................',
+        '......CCC.......',
+        '....CCCCCCC.....',
+        '...CCCCCCCCC....',
+        '..CCCCCCCCCCC...',
+        '.CCCCCCCCCCCCC..',
+        '.CCCCCCCCCCCCC..',
+        '.CCCCCCCCCCCCC..',
+        '................',
+    ],
 };
 
 /* ====== Paleta base por carácter ======

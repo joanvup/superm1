@@ -17,8 +17,9 @@
 ## Estado actual del proyecto
 
 - **Ultima actualizacion:** 2026-10-24
-- **Fase:** Juego completo y jugable - probado en navegador (nivel 1-1 superable,
-  meta con animacion). Pendiente de ampliacion (mas niveles, jefes, tactil)
+- **Fase:** Dos niveles completos y jugables (1-1 soleado y 2-1 cueva) con
+  enemigos (goomba, koopa, piraña), power-ups, meta animada y musica por tema.
+  Pendiente de ampliacion (mas niveles, jefes, tactil)
 
 ---
 
@@ -51,7 +52,7 @@ superm1/
     |-- physics.js      <- Fisica y colisiones
     |-- player.js       <- Jugador
     |-- entities.js     <- Enemigos y power-ups
-    |-- level.js        <- Nivel 1-1
+    |-- level.js        <- Niveles 1-1 (cielo) y 2-1 (cueva)
     |-- audio.js        <- Audio sintetizado
     |-- game.js         <- Motor del juego
     `-- main.js         <- Bootstrap
@@ -62,7 +63,7 @@ superm1/
 ```
 superm1/
 |-- test.js       <- Test unitario de fisica y logica (node test.js)
-|-- playtest.js   <- Auditoria de jugabilidad: salto y obstaculos del nivel
+|-- playtest.js   <- Auditoria de jugabilidad: fisica, obstaculos y huecos del 1-1 y 2-1
 `-- flagtest.js   <- Test de la animacion de la meta (usa la clase Game real)
 ```
 
@@ -87,7 +88,11 @@ superm1/
 - [x] Corregir la jugabilidad (salto y alcance) tras auditoria del nivel
 - [x] Corregir la secuencia de la bandera (ya no deja a Mario bloqueado)
 - [x] Anadir animacion de la bandera al llegar a la meta (5 fases + castillo)
-- [ ] *(Extendible: nivel 2, jefes, sonido mejorado, soporte tactil)*
+- [x] Implementar nivel 2-1 (cueva): fondo, estrellas, estalactitas
+- [x] Implementar planta piraña (sale/entra de tuberias, no se aplasta)
+- [x] Encadenar 1-1 -> 2-1 conservando puntos y vidas + melodia de cueva
+- [x] Ampliar la auditoria: techos que anulan el salto y barrido de timings
+- [ ] *(Extendible: nivel 2-2, jefes, sonido mejorado, soporte tactil)*
 
 ---
 
@@ -97,7 +102,9 @@ superm1/
 - **Sprites procedurales** (sin archivos de imagen) - todo se genera por codigo.
 - **Tiles de 32px**, sprites 16x16 escalados x2.
 - **3 estados del jugador**: normal, super (hongo), fuego (flor).
-- **1 nivel de momento** (1-1), 140 tiles de ancho (~4480 px).
+- **2 niveles encadenados**: 1-1 y 2-1 (cueva), ambos de 140 tiles. Al morir
+  se vuelve al 1-1, como en SMB; los puntos y vidas se conservan entre niveles.
+- **Tema por nivel** (`Level.theme`): decide fondo, decoracion y melodia.
 - **Fisica del salto equilibrada** para que el nivel 1-1 sea superable (salto
   ~4.9 tiles, alcance ~6 tiles) tras auditar los obstaculos con `playtest.js`.
 - **Colision de bloques ?** detectada desde el player (`onPlayerHitCeiling`).
@@ -117,6 +124,8 @@ sesiones/YYYY-MM-DD-tema.md
 - `2026-10-24-desarrollo-superm1.md` - Desarrollo del juego (estructura y codigo completo).
 - `2026-10-24-jugabilidad-salto.md` - Auditoria de jugabilidad y correccion de la fisica del salto.
 - `2026-10-24-secuencia-bandera.md` - Bug en la secuencia de la bandera (Mario bloqueado) y su arreglo.
+- `2026-10-24-animacion-meta.md` - Animacion de la bandera en 5 fases y castillo.
+- `2026-10-24-nivel-2.md` - Nivel 2-1 (cueva), planta piraña y niveles encadenados.
 
 ---
 

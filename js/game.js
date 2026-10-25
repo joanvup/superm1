@@ -10,6 +10,7 @@ class Game {
         this.entities = [];
         this.particles = [];
         this.cameraX = 0;
+        this.currentLevel = 1;   // nivel actual (1 = 1-1, 2 = 2-1 cuevas)
 
         this.score = 0;
         this.coins = 0;
@@ -23,6 +24,7 @@ class Game {
         this.coinsEl = document.getElementById('coins');
         this.timeEl = document.getElementById('time');
         this.livesEl = document.getElementById('lives');
+        this.worldEl = document.getElementById('world');
         this.overlay = document.getElementById('overlay');
         this.overlayTitle = document.getElementById('overlay-title');
         this.overlayMsg = document.getElementById('overlay-message');
@@ -34,14 +36,24 @@ class Game {
 
     // ----- Inicializacion del nivel -----
 
-    startLevel() {
-        this.level = buildLevel1();
+    /* Carga el nivel `n` (1 o 2). Devuelve true si el nivel existe. */
+    startLevel(n = 1) {
+        if (n === 1) this.level = buildLevel1();
+        else if (n === 2) this.level = buildLevel2();
+        else return false;
+
+        this.currentLevel = n;
         this.entities = [];
         this.particles = [];
 
         for (const s of this.level.spawns) {
             if (s.type === 'goomba') this.entities.push(new Goomba(s.x, s.y));
             else if (s.type === 'koopa') this.entities.push(new Koopa(s.x, s.y));
+            else if (s.type === 'piranha') {
+                const p = new Piranha(s.x, s.y);
+                p.initFromLevel(this.level);
+                this.entities.push(p);
+            }
         }
 
         this.player = new Player(this.level.playerStart.x, this.level.playerStart.y);
@@ -49,12 +61,15 @@ class Game {
         this.time = 400;
         this.timerAccum = 0;
         this.flagSeq = null; // estado de la secuencia de la bandera
+        this.updateHUD();    // refleja el mundo nuevo (1-1 / 2-1) al instante
+        return true;
     }
 
+    /* Reinicia el nivel actual al morir (vuelve al 1-1, como en SMB). */
     resetLevel() {
-        this.startLevel();
+        this.startLevel(1);
         this.setState('playing');
-        this.audio.startMusic();
+        this.audio.startMusic(this.level.theme);
     }
 
     gameOver() {
@@ -64,12 +79,24 @@ class Game {
         this.overlayMsg.textContent = 'Pulsa R para reintentar';
     }
 
+    /* Completar un nivel: si no es el ultimo, pasa al siguiente. */
     win() {
-        this.setState('win');
         this.audio.stopMusic();
         if (this.player) this.player.inputLocked = false;
-        this.overlayTitle.textContent = 'NIVEL COMPLETADO';
-        this.overlayMsg.textContent = 'Pulsa R para volver a jugar';
+
+        if (this.currentLevel < 2) {
+            // Pasa al nivel siguiente conservando puntuacion y vidas
+            const next = this.currentLevel + 1;
+            this.audio.playSound('levelClear');
+            this.startLevel(next);
+            this.setState('playing');
+            this.audio.startMusic(this.level.theme);
+        } else {
+            // Ultimo nivel completado
+            this.setState('win');
+            this.overlayTitle.textContent = 'FELICIDADES';
+            this.overlayMsg.textContent = 'Has completado SuperM1 - Pulsa R para volver a jugar';
+        }
     }
 
     setState(s) {
@@ -100,11 +127,11 @@ class Game {
             if ((this.state === 'menu') && (code === 'Enter' || code === 'Space')) {
                 console.log('SUPERM1: Juego iniciado');
                 this.setState('playing');
-                this.audio.startMusic();
+                this.audio.startMusic(this.level.theme);
             }
             else if (this.state === 'paused' && code === Input.CODES.PAUSE) {
                 this.setState('playing');
-                this.audio.startMusic();
+                this.audio.startMusic(this.level.theme);
             }
             else if (this.state === 'playing' && code === Input.CODES.PAUSE) {
                 this.setState('paused');
@@ -192,8 +219,10 @@ class Game {
 
             if (!Physics.aabb(p.x, p.y, p.width, p.height, e.x, e.y, e.width, e.height)) continue;
 
+            // Las plantas pirana no se aplastan: se toque por donde se toque,
+            // hacen dano (noStomp).
             const fallingOnto = p.vy > 0 && (p.y + p.height - e.y) < e.height * 0.6;
-            if (fallingOnto) {
+            if (fallingOnto && !e.noStomp) {
                 p.vy = -6;
                 e.squish(this);
             } else {
@@ -446,8 +475,9 @@ class Game {
         const ch = this.canvas.height;
         const cam = Math.floor(this.cameraX);
 
-        // Cielo
-        ctx.fillStyle = '#5c94fc';
+        // Fondo segun el tema del nivel (cielo azul o cueva oscura)
+        ctx.fillStyle = this.level.theme === 'underground'
+            ? Sprite.COLORS.caveBg : '#5c94fc';
         ctx.fillRect(0, 0, cw, ch);
 
         this.renderDecor(ctx, cam);
@@ -468,15 +498,30 @@ class Game {
     }
 
     renderDecor(ctx, cam) {
+        // Cada tipo de decoracion tiene su propio factor de paralaje.
+        // Las estalactitas y los arbustos van a 1.0 porque estan anclados al
+        // techo/suelo (que no tiene paralaje): con otro factor flotarian.
+        const PARALLAX = { star: 0.15, stalactite: 1, cloud: 0.5, hill: 0.5, bush: 1, caveBush: 1 };
+
         for (const d of this.level.decor) {
-            const dx = Math.round(d.x - cam * 0.5);
-            if (dx < -80 || dx > this.canvas.width + 80) continue;
+            const factor = PARALLAX[d.type] || 0.5;
+            const dx = Math.round(d.x - cam * factor);
+            if (dx < -120 || dx > this.canvas.width + 120) continue;
             if (d.type === 'cloud') {
                 drawSprite(ctx, Sprite.cloud, dx, d.y, 2 * (d.scale || 1), { G: '#5c94fc' });
             } else if (d.type === 'bush') {
                 drawSprite(ctx, Sprite.bush, dx, d.y, 2 * (d.scale || 1));
             } else if (d.type === 'hill') {
                 drawSprite(ctx, Sprite.hill, dx, d.y, 2 * (d.scale || 1));
+            } else if (d.type === 'star') {
+                drawSprite(ctx, Sprite.star, dx, d.y, 2 * (d.scale || 1),
+                    { D: Sprite.COLORS.caveStar });
+            } else if (d.type === 'stalactite') {
+                drawSprite(ctx, Sprite.stalactite, dx, d.y, 2 * (d.scale || 1),
+                    { C: Sprite.COLORS.caveRock });
+            } else if (d.type === 'caveBush') {
+                drawSprite(ctx, Sprite.caveBush, dx, d.y, 2 * (d.scale || 1),
+                    { C: Sprite.COLORS.caveBush });
             }
         }
     }
@@ -587,5 +632,6 @@ class Game {
         if (this.coinsEl) this.coinsEl.textContent = String(this.coins).padStart(2, '0');
         if (this.timeEl) this.timeEl.textContent = String(this.time).padStart(3, '0');
         if (this.livesEl) this.livesEl.textContent = String(this.lives);
+        if (this.worldEl) this.worldEl.textContent = `${this.currentLevel}-1`;
     }
 }
