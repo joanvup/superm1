@@ -16,6 +16,8 @@
 | `6010a75` | refactor: add headless playtest simulator and update player physics to make 1-1 level fully clearable | **Exacto.** `playtest.js` nuevo + ajuste de fisica en `js/physics.js` + nota de sesion | 4 |
 | `6515179` | feat: implement game loop, level management, and project documentation for SuperM1 | **Inexacto.** Es el **fix de la bandera** que dejaba a Mario bloqueado: `win()` directo en lugar de `setTimeout`, `flagtest.js` nuevo y nota de sesion | 5 |
 | `da5cc9a` | feat: add player, audio, sprites, and core game logic modules | **Inexacto.** Es la **animacion de la meta en 5 fases**: `checkFlag` reescrito (+222 lineas en `game.js`), render del castillo, sprite `flagBanner`, `FloatingText`, sonidos `slide`/`levelClear`, flags `climbing`/`alpha`, `advanceAnimation()` y nota de sesion | 6 |
+| `d0a5164` | docs: add project documentation and commit history mapping in memoria | **Exacto.** Crea `commits.md`, actualiza `README.md` de memoria y las notas de sesion 4 y 5 | 6 |
+| `9580e25` | feat: nivel 2-1 (cueva), planta pirana y niveles encadenados | **Exacto.** Nivel 2-1, `Piranha`, encadenado 1-1 -> 2-1, musica de cueva, auditoria ampliada y correccion de varios obstaculos imposibles (tambien en el 1-1) | 7 |
 
 ---
 
